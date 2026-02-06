@@ -1,0 +1,15 @@
+C:\Users\<username>\AppData\Roaming\RabbitMQ\advanced.config
+[
+  {rabbit, [
+    {loopback_users, []}
+  ]},
+  {rabbitmq_management, [
+    {listener, [{port, 15672}, {ip, "0.0.0.0"}]}
+  ]}
+].
+
+
+C:\Users\<username>\AppData\Roaming\RabbitMQ\rabbitmq.conf
+loopback_users.guest = false
+management.tcp.ip = 0.0.0.0
+listeners.tcp = 0.0.0.0:5672
