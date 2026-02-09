@@ -60,9 +60,21 @@ func PublisherPaymentNotificationWa(c *gin.Context) {
 	}
 
 	data := models.NotifPaymentWa{
-		AggrNo: req.AggrNo,
-		Amount: req.Amount,
-		WaNo:   req.WaNo,
+		AggrNo:           req.AggrNo,
+		TotalPaid:        req.TotalPaid,
+		WaNo:             req.WaNo,
+		CustomerName:     req.CustomerName,
+		Senddtm:          req.Senddtm,
+		Sendby:           req.Sendby,
+		Templatecode:     req.Templatecode,
+		TransactionSrc:   req.TransactionSrc,
+		Paymentmetodcode: req.Paymentmetodcode,
+		Refno:            req.Refno,
+		RefNoWa:          req.RefNoWa,
+		Filepath:         req.Filepath,
+		Flagreversal:     req.Flagreversal,
+		Createdby:        req.Createdby,
+		Createddtm:       req.Createddtm,
 	}
 	reqLog, _ := json.Marshal(data)
 
