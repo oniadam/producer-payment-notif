@@ -97,6 +97,13 @@ func PublisherPaymentNotificationWa(c *gin.Context) {
 
 	log.Println("Pesan berhasil dikirim:", string(reqLog))
 
-	c.String(http.StatusOK, "Pesan berhasil dikirim ke RabbitMQ")
+	// c.String(http.StatusOK, "Pesan berhasil dikirim ke RabbitMQ")
+	c.JSON(200, gin.H{
+		"error":             "",
+		"responseCode":      "200",
+		"responseMessage":   "success",
+		"responseTimestamp": time.Now().Format("2006-01-02 15:04:05"),
+		"data":              nil,
+	})
 	// return
 }
