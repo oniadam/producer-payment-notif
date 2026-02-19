@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"producer-payment-notif/models"
+	"producer-payment-notif/repo"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,24 @@ func PublisherPaymentNotificationWa(c *gin.Context) {
 			Data:              nil,
 		}
 		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	// cek status notif akitf atau ngga
+	ceksetting, errceksetting := repo.GetSettingPaymentNotoif("PT03", "TN")
+	if errceksetting != nil {
+		res := models.Respons{
+			Errors:            errceksetting.Error(),
+			ResponseCode:      "500",
+			ResponseMessage:   "Error Cek Setting",
+			ResponseTimestamp: time.Now().Format("2006-01-02 15:04:05"),
+			Data:              nil,
+		}
+		resLogSearch, _ := json.Marshal(res)
+		log.Println("error cek setting notif", string(resLogSearch))
+	}
+
+	if ceksetting.Data.(int64) == 0 {
 		return
 	}
 
