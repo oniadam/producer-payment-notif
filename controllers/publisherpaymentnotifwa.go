@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/streadway/amqp"
 )
 
@@ -44,19 +45,86 @@ func PublisherPaymentNotificationWa(c *gin.Context) {
 	}
 	defer ch.Close()
 
-	// Mendeklarasikan antrian (queue) yang akan digunakan
-	queueName := "paymentnotificationwa_queue"
-	_, err = ch.QueueDeclare(
-		queueName, // Nama antrian
-		true,      // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
+	err = ch.ExchangeDeclare(
+		"payment_exchange",
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
 		log.Println("Gagal mendeklarasi antrian:", err)
 		return
+	}
+
+	err = ch.ExchangeDeclare(
+		"payment_dlx",
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Gagal declare DLX:", err)
+	}
+
+	args := amqp.Table{
+		"x-dead-letter-exchange":    "payment_dlx",
+		"x-dead-letter-routing-key": "payment.error",
+	}
+
+	_, err = ch.QueueDeclare(
+		"paymentnotificationwa_queue",
+		true,
+		false,
+		false,
+		false,
+		args,
+	)
+	if err != nil {
+		log.Fatal("Gagal declare queue:", err)
+	}
+
+	// Bind queue ke exchange
+	err = ch.QueueBind(
+		"paymentnotificationwa_queue",
+		"payment.wa",
+		"payment_exchange",
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Gagal bind queue:", err)
+	}
+
+	// ================================
+	// 4. Declare Error Queue
+	// ================================
+	_, err = ch.QueueDeclare(
+		"paymentnotificationwa_error_queue",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Gagal declare error queue:", err)
+	}
+
+	err = ch.QueueBind(
+		"paymentnotificationwa_error_queue",
+		"payment.error",
+		"payment_dlx",
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Gagal bind error queue:", err)
 	}
 
 	data := models.NotifPaymentWa{
@@ -78,16 +146,22 @@ func PublisherPaymentNotificationWa(c *gin.Context) {
 	}
 	reqLog, _ := json.Marshal(data)
 
+	traceID := uuid.New().String()
+
 	// Publish pesan ke antrian
 	errPub := ch.Publish(
-		"",        // exchange
-		queueName, // routing key (nama antrian)
-		false,     // mandatory
-		false,     // immediate
+		"payment_exchange", // exchange
+		"payment.wa",       // routing key
+		false,
+		false,
 		amqp.Publishing{
-			ContentType:  "text/plain",
-			Body:         reqLog, //[]byte(string(reqLog)),
+			ContentType:  "application/json",
+			Body:         reqLog,
 			DeliveryMode: amqp.Persistent,
+			Headers: amqp.Table{
+				"trace_id": traceID,
+				"service":  "payment_notif_wa",
+			},
 		},
 	)
 	if errPub != nil {
