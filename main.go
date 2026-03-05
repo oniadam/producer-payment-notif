@@ -6,22 +6,21 @@ import (
 	"producer-payment-notif/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	// passphrase := "mNsRjOIdbyj1X2i6lLFJ5KE/evhYQIEz"
-
-	// // Muat dan dekripsi file .env.enc
-	// err := utils.LoadEncryptedEnv(".env.enc", passphrase)
+	// err := godotenv.Load()
 	// if err != nil {
-	// 	log.Fatal("Error loading encrypted .env file:", err)
+	// 	log.Fatal("Error loading .env file")
 	// }
+
+	passphrase := "mNsRjOIdbyj1X2i6lLFJ5KE/evhYQIEz"
+
+	// Muat dan dekripsi file .env.enc
+	err := utils.LoadEncryptedEnv(".env.enc", passphrase)
+	if err != nil {
+		log.Fatal("Error loading encrypted .env file:", err)
+	}
 
 	g := gin.Default()
 
