@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"producer-payment-notif/models"
@@ -13,11 +13,10 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func PublisherPaymentNotificationWa(c *gin.Context) {
-	req := models.NotifPaymentWa{}
-	body := c.Request.Body
-	dataBodyReq, _ := ioutil.ReadAll(body)
-	err := json.Unmarshal(dataBodyReq, &req)
+func PublisherPaymentNotificationWaArray(c *gin.Context) {
+
+	body, err := io.ReadAll(c.Request.Body)
+
 	if err != nil {
 		res := models.Respons{
 			Errors:            "1",
@@ -28,6 +27,26 @@ func PublisherPaymentNotificationWa(c *gin.Context) {
 		}
 		c.JSON(http.StatusBadRequest, res)
 		return
+	}
+
+	req := []models.NotifPaymentWa{}
+
+	if len(body) > 0 && body[0] == '[' {
+		// jika array
+		err = json.Unmarshal(body, &req)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid array format"})
+			return
+		}
+	} else {
+		// jika single object
+		var single models.NotifPaymentWa
+		err = json.Unmarshal(body, &single)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid object format"})
+			return
+		}
+		req = append(req, single)
 	}
 
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
@@ -127,27 +146,33 @@ func PublisherPaymentNotificationWa(c *gin.Context) {
 		log.Fatal("Gagal bind error queue:", err)
 	}
 
-	data := models.NotifPaymentWa{
-		AggrNo:            req.AggrNo,
-		TotalPaid:         req.TotalPaid,
-		IdNo:              req.IdNo,
-		WaNo:              req.WaNo,
-		CustomerName:      req.CustomerName,
-		Senddtm:           req.Senddtm,
-		Sendby:            req.Sendby,
-		Templatecode:      req.Templatecode,
-		TransactionSrc:    req.TransactionSrc,
-		Paymentmetodcode:  req.Paymentmetodcode,
-		Refno:             req.Refno,
-		RefNoWa:           req.RefNoWa,
-		Filepath:          req.Filepath,
-		Flagreversal:      req.Flagreversal,
-		Createdby:         req.Createdby,
-		Createddtm:        req.Createddtm,
-		CustomerServiceNo: req.CustomerServiceNo,
-		LanguageCode:      req.LanguageCode,
-	}
-	reqLog, _ := json.Marshal(data)
+	// data := models.NotifPaymentWa{}
+	// for _, v := range req {
+	// 	data = models.NotifPaymentWa{
+	// 		AggrNo:            v.AggrNo,
+	// 		TotalPaid:         v.TotalPaid,
+	// 		IdNo:              v.IdNo,
+	// 		WaNo:              v.WaNo,
+	// 		CustomerName:      v.CustomerName,
+	// 		Senddtm:           v.Senddtm,
+	// 		Sendby:            v.Sendby,
+	// 		Templatecode:      v.Templatecode,
+	// 		TransactionSrc:    v.TransactionSrc,
+	// 		Paymentmetodcode:  v.Paymentmetodcode,
+	// 		Refno:             v.Refno,
+	// 		RefNoWa:           v.RefNoWa,
+	// 		Filepath:          v.Filepath,
+	// 		Flagreversal:      v.Flagreversal,
+	// 		Createdby:         v.Createdby,
+	// 		Createddtm:        v.Createddtm,
+	// 		CustomerServiceNo: v.CustomerServiceNo,
+	// 		LanguageCode:      v.LanguageCode,
+	// 	}
+	// }
+
+	// req = append(req, data)
+
+	reqLog, _ := json.Marshal(req)
 
 	traceID := uuid.New().String()
 
