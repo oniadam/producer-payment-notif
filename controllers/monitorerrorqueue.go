@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"producer-payment-notif/repo"
 
 	"github.com/gin-gonic/gin"
 	"github.com/streadway/amqp"
@@ -48,6 +49,14 @@ func MonitorQueueError(c *gin.Context) {
 		// balikin lagi ke queue
 		msg.Nack(false, false)
 		// msg.Nack(false, false) kalo mau pesan ga ilang
+	}
+
+	_, errinsPaymentNotifWa := repo.InsertQueueError(allMessages)
+	if errinsPaymentNotifWa != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errinsPaymentNotifWa.Error(),
+		})
+		return
 	}
 
 	log.Println("Total Error Message:", len(allMessages))

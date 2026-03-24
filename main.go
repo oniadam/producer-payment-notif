@@ -29,8 +29,9 @@ func main() {
 
 	g.POST("/api/v1/send-msg-notif", controllers.PublisherPaymentNotification)
 	g.POST("/api/v1/send-msg-notif-wa", controllers.PublisherPaymentNotificationWaArray)
+	g.POST("/api/v1/send-msg-notif-wa-error", controllers.PublisherPaymentNotificationWaArrayError) // get data error queue push lagi ke rabbit
 	g.GET("/api/v1/list/queue", controllers.ListQueue)
-	g.GET("/api/v1/monitor/queue/error", controllers.MonitorQueueError)
+	g.GET("/api/v1/monitor/queue/error", controllers.MonitorQueueError) // insert queue error ke db
 	g.GET("/api/v1/list/queue/:name", controllers.DetailQueue)
 	g.DELETE("/api/v1/delete/queue/:name", controllers.DeleteQueue)
 
