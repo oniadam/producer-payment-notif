@@ -49,6 +49,17 @@ func PublisherPaymentNotificationWaArray(c *gin.Context) {
 		req = append(req, single)
 	}
 
+	if len(req) == 0 {
+		c.JSON(200, gin.H{
+			"error":             "",
+			"responseCode":      "200",
+			"responseMessage":   "no data to publish",
+			"responseTimestamp": time.Now().Format("2006-01-02 15:04:05"),
+			"data":              nil,
+		})
+		return
+	}
+
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	if err != nil {
 		log.Println("Gagal terhubung ke RabbitMQ:", err)
